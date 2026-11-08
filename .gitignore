@@ -1,0 +1,8 @@
+# Generated F-Droid repository output
+/repo/
+/archive/
+
+# Private repository signing key
+/keystore.jks
+*.keystore
+*.jks
