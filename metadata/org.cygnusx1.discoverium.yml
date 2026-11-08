@@ -1,0 +1,15 @@
+Categories:
+  - Internet
+License: GPL-3.0-or-later
+AuthorName: Discoverium contributors
+WebSite: https://github.com/cygnusx-1-org/Discoverium
+SourceCode: https://github.com/cygnusx-1-org/Discoverium
+IssueTracker: https://github.com/cygnusx-1-org/Discoverium/issues
+Changelog: https://github.com/cygnusx-1-org/Discoverium/releases
+Summary: Discover and update Android apps from their original sources
+Description: |
+  Discoverium lets you discover Android apps and receive updates directly
+  from their original release sources. This repository republishes the
+  official APK release and does not rebuild or modify the application.
+
+  APKs are downloaded from the official Discoverium GitHub releases.
