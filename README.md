@@ -70,9 +70,18 @@ https://wrathxv.github.io/-Discoverium-FDroid
 ```
 
 The repository is not ready to add until the first deployment succeeds.
-F-Droid will ask you to verify the repository signing fingerprint; compare it
-against the fingerprint shown by the repository's signing certificate. Do not
-accept a fingerprint you have not independently verified.
+The first successful `fdroid update --verbose` run prints the repository
+index-signing SHA-256 fingerprint in the Actions log (look for
+`Creating signed index with this key (SHA256)`). Copy the 64 hexadecimal
+characters, remove spaces, and append it to the repository URL like this:
+
+```
+https://wrathxv.github.io/-Discoverium-FDroid?fingerprint=YOUR_64_CHARACTER_SHA256
+```
+
+Use that fingerprint-pinned URL when adding the repo in F-Droid. Do not accept
+a different fingerprint without investigating it. The F-Droid client can also
+show the repo certificate fingerprint in its repository details.
 
 ## Important notes
 
