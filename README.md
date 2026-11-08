@@ -66,7 +66,7 @@ A scheduled run checks for a new upstream release every day.
 After the first successful workflow run, add this URL in the F-Droid client:
 
 ```
-https://wrathxv.github.io/-Discoverium-FDroid
+https://wrathxv.github.io/-Discoverium-FDroid/repo
 ```
 
 The repository is not ready to add until the first deployment succeeds.
@@ -76,7 +76,7 @@ index-signing SHA-256 fingerprint in the Actions log (look for
 characters, remove spaces, and append it to the repository URL like this:
 
 ```
-https://wrathxv.github.io/-Discoverium-FDroid?fingerprint=YOUR_64_CHARACTER_SHA256
+https://wrathxv.github.io/-Discoverium-FDroid/repo?fingerprint=YOUR_64_CHARACTER_SHA256
 ```
 
 Use that fingerprint-pinned URL when adding the repo in F-Droid. Do not accept
