@@ -103,10 +103,15 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare Pages directory
+        run: |
+          mkdir -p public
+          cp -a repo public/repo
+
       - name: Upload F-Droid repository as Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: repo/
+          path: public/
 
       - name: Publish repository
         id: deployment
