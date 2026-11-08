@@ -31,7 +31,7 @@ Encode the keystore as one Base64 line:
 base64 -w 0 fdroid-keystore.jks
 ```
 
-On macOS, use `base64 < fdroid-keystore.jks | tr -d '\\n'` instead.
+On macOS, use `base64 < fdroid-keystore.jks | tr -d '\n'` instead. On Windows PowerShell, use `[Convert]::ToBase64String([IO.File]::ReadAllBytes('fdroid-keystore.jks'))`.
 
 ### 2. Add three GitHub Actions secrets
 
