@@ -1,0 +1,113 @@
+name: Build and publish Discoverium F-Droid repository
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: fdroid-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install F-Droid tools and APK utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aapt
+          python -m pip install --upgrade pip
+          python -m pip install fdroidserver
+
+      - name: Restore repository signing key
+        env:
+          F_DROID_KEYSTORE_BASE64: ${{ secrets.F_DROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$F_DROID_KEYSTORE_BASE64" || {
+            echo "::error::Missing F_DROID_KEYSTORE_BASE64 repository secret. Follow the setup instructions in README.md."
+            exit 1
+          }
+          printf '%s' "$F_DROID_KEYSTORE_BASE64" | base64 --decode > keystore.jks
+          chmod 600 keystore.jks
+
+      - name: Download latest official Discoverium release APK
+        id: apk
+        run: |
+          set -euo pipefail
+          release="$(curl -fsSL https://api.github.com/repos/cygnusx-1-org/Discoverium/releases/latest)"
+          asset="$(printf '%s' "$release" | jq -cer '[.assets[] | select(.name | endswith(".apk"))] | if length == 1 then .[0] else error("Expected exactly one APK asset") end')"
+          url="$(printf '%s' "$asset" | jq -r '.browser_download_url')"
+          digest="$(printf '%s' "$asset" | jq -r '.digest // empty')"
+          mkdir -p repo
+          curl -fL "$url" -o /tmp/discoverium.apk
+          if [ -n "$digest" ]; then
+            expected="${digest#sha256:}"
+            actual="$(sha256sum /tmp/discoverium.apk | cut -d' ' -f1)"
+            test "$actual" = "$expected" || {
+              echo "::error::APK SHA-256 does not match GitHub's release digest."
+              exit 1
+            }
+          fi
+          package="$(aapt dump badging /tmp/discoverium.apk | sed -n "s/^package: name='\\([^']*\\)' versionCode='\\([^']*\\)'.*/\\1_\\2.apk/p" | head -n1)"
+          test -n "$package" || {
+            echo "::error::Could not read package name/version code from APK."
+            exit 1
+          }
+          test "${package%%_*}" = "org.cygnusx1.discoverium" || {
+            echo "::error::Unexpected APK package: $package"
+            exit 1
+          }
+          cp /tmp/discoverium.apk "repo/$package"
+          echo "asset_name=$(printf '%s' "$asset" | jq -r '.name')" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$package" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$(printf '%s' "$release" | jq -r '.tag_name')" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed F-Droid indexes
+        env:
+          F_DROID_KEYSTORE_PASS: ${{ secrets.F_DROID_KEYSTORE_PASS }}
+          F_DROID_KEY_PASS: ${{ secrets.F_DROID_KEY_PASS }}
+        run: |
+          test -n "$F_DROID_KEYSTORE_PASS" || {
+            echo "::error::Missing F_DROID_KEYSTORE_PASS repository secret."
+            exit 1
+          }
+          test -n "$F_DROID_KEY_PASS" || {
+            echo "::error::Missing F_DROID_KEY_PASS repository secret."
+            exit 1
+          }
+          fdroid update --verbose
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload F-Droid repository as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo/
+
+      - name: Publish repository
+        id: deployment
+        uses: actions/deploy-pages@v4
